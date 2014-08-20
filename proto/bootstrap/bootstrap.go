@@ -229,6 +229,10 @@ func (bs *Bootstrapper) probe() {
 	// Set up some initial parameters
 	ones, bits := bs.mask.Size()
 
+	if ones == 32 {
+		// /32, just do /8
+		ones = 8
+	}
 	// Probe random addresses until termination is requested
 	var errc chan error
 	for errc == nil {

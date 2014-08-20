@@ -49,6 +49,29 @@ func TestPortSelection(t *testing.T) {
 	}
 }
 
+func TestBroadcastPanic(t *testing.T) {
+	// Create the localhost IP net
+	ipnet := &net.IPNet{
+		IP:   net.IPv4(127, 0, 0, 1),
+		Mask: net.IPv4Mask(0xff, 0xff, 0xff, 0xff),
+	}
+	// Make sure bootstrappers can select unused ports
+	for i := 0; i < len(config.BootPorts); i++ {
+		if bs, _, err := New(ipnet, []byte("magic"), big.NewInt(int64(i)), 11111); err != nil {
+			t.Fatalf("failed to create bootstrapper: %v.", err)
+		} else {
+			if err := bs.Boot(); err != nil {
+				t.Fatalf("failed to boot bootstrapper: %v.", err)
+			}
+			defer bs.Terminate()
+		}
+	}
+	// Ensure failure after all ports are used
+	if _, _, err := New(ipnet, []byte("magic"), big.NewInt(333), 11111); err == nil {
+		t.Errorf("bootstrapper created even though no ports were available.")
+	}
+}
+
 func TestScan(t *testing.T) {
 	// Define some local constants
 	over1, _ := net.ResolveTCPAddr("tcp", "127.0.0.3:33333")
